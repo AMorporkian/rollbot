@@ -11,6 +11,28 @@ import random
 from datetime import datetime
 
 
+class RollBot:
+    def __init__(self):
+        pass
+
+    def send_message(self, channel, message):
+        pass
+
+    def send_ping(self, ping_message):
+        pass
+
+    def join_channel(self, channel):
+        pass
+
+    def leave_channel(self, channel):
+        pass
+
+    def connect(self):
+        pass
+
+    def run_loop(self):
+        pass
+
 #define ircsock
 ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
