@@ -12,7 +12,15 @@ from datetime import datetime
 
 
 class RollBot:
+    CONFIG_LOCATION = "./config.json"
+
     def __init__(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        with open(self.CONFIG_LOCATION) as f:
+            self.config = json.load(f)
+        self.run_loop()
+
+    def on_connect(self):
         pass
 
     def send_message(self, channel, message):
