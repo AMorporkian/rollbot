@@ -16,6 +16,8 @@ class RollBot:
 
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.last_ping = None
+
         with open(self.CONFIG_LOCATION) as f:
             self.config = json.load(f)
         self.run_loop()
@@ -27,7 +29,8 @@ class RollBot:
         pass
 
     def send_ping(self, ping_message):
-        pass
+        self.send_raw("PONG :" + ping_message)
+        self.update_ping_time()
 
     def join_channel(self, channel):
         pass
@@ -40,6 +43,12 @@ class RollBot:
 
     def run_loop(self):
         pass
+
+    def send_raw(self, message):
+        return self.socket.send(message + "\n")
+
+    def update_ping_time(self):
+        self.last_ping = time.time()
 
 #define ircsock
 ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,7 +68,7 @@ owner_pass = ''
 # Connecting to IRC and shit
 def ping(content):
     global last_ping
-    ircsock.send("PONG :" + content + "\n")
+    ircsock.send("PONG :" + content)
     last_ping = time.time()
 
 
