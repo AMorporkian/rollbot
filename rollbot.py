@@ -11,11 +11,22 @@ import json
 import re
 from logbook import Logger
 import inspect
+import sys
 
 
 def command(method):  # A decorator to automatically register and add commands to the bot.
     method.is_command = True
     return method
+
+
+def owner_command(method):
+    method.is_command = True
+    def wrapper(self, source, *args):
+        if self.owner.lower() != source.lower():
+            return "You can't control me {}!".format(source)
+        return method(self, source, *args)
+    wrapper.is_command = True
+    return wrapper
 
 
 class RollBot:
@@ -25,18 +36,22 @@ class RollBot:
         self.command_list = {}
         self.logger = Logger('RollBot', level=2)
         self.logger.info("RollBot started.")
+        self.last_ping = None
+        self.registered = False
+
+        with open(self.CONFIG_LOCATION) as f:
+            self.config = json.load(f)
+        self.nick = self.config['botnick']
+        self.owner = self.config['owner']['nick']
+        self.channels = set([x.lower() for x in self.config['channel']])
+        self.command_prefix = self.config['prefix']
 
         for name, method in inspect.getmembers(self.__class__, predicate=inspect.ismethod):
             if getattr(method, "is_command", False):
                 self.command_list[name] = getattr(self, name)
                 self.logger.info("Added '{}' as a command.", name)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.last_ping = None
-        self.registered = False
-        with open(self.CONFIG_LOCATION) as f:
-            self.config = json.load(f)
-        self.nick = self.config['botnick']
-        self.command_prefix = self.config['prefix']
+
 
     def send_message(self, channel, message):
         message_template = "PRIVMSG {} :{}"
@@ -48,12 +63,15 @@ class RollBot:
         self.update_ping_time()
 
     def join_channel(self, channel):
+        if channel
         message_template = "JOIN {}"
         self.send_raw(message_template.format(channel))
 
     def leave_channel(self, channel):
-        message_template = "PART {}"
-        self.send_raw(message_template.format(channel))
+        if channel in self.channels:
+            message_template = "PART {}"
+            self.send_raw(message_template.format(channel))
+            self.channels.remove(channel)
 
     def connect(self):
         server_information = (self.config['server'], self.config['port'])
@@ -193,12 +211,48 @@ class RollBot:
             return "no, {}, it is not".format(source)
 
     @command
-    def rate(self, source, reply_to, ratee, *args):
+    def rate(self, source, reply_to, ratee=None, *args):
         if ratee is None:
             return "Who do you want me to rate?"
         else:
             return "{} has a rating of: {}".format(ratee, random.randint(1, 100))
 
+    @command
+    def streams(self, source, reply_to, *args):
+        pass  # TODO
+
+    @command
+    def roll(self, source, reply_to, *args):
+        return "Sorry {}, I can't do that right now.".format(source)
+
+    @owner_command
+    def quit(self, source, reply_to, *args):
+        self.logger.warn("Shutting down by request of {}", source)
+        self.send_raw("QUIT :rollbot's out!")
+        self.socket.shutdown(1)
+        self.socket.close()
+        sys.exit()
+
+    @owner_command
+    def join(self, source, reply_to, channel=None, *args):
+        if channel is None:
+            return "Please specify a channel you wish me to join."
+        else:
+            self.logger.info("Joining {} by request of {}".format(channel, source))
+            self.join_channel(channel)
+
+    @owner_command
+    def part(self, source, reply_to, channel=None, *args):
+        if reply_to == source and channel is None:  # If this was a private message, we have no channel to leave.
+            return "Sorry, you must run this command in a channel or provide a channel as an argument."
+        elif channel is not None:
+            if channel in self.channels:
+                self.leave_channel(channel)
+                return "Left channel {}!".format(channel)
+            else:
+                return "I don't believe I'm in that channel!"
+        else:  # It was a channel message, so let's leave.
+            self.leave_channel(reply_to)
 
 if __name__ == "__main__":
     bot = RollBot()
@@ -307,9 +361,6 @@ def commands(nick, chan, msg):
     # Trigger: slap
     elif ircmsg.find("slaps " + botnick) != -1:
         sendmsg(chan, "bitch ill slap you right back")
-    # Command: roll
-    elif (command == ":" + prefix + "roll"):
-        sendmsg(chan, "Sorry %s, I can't do that right now." % (nick))
     # Command: !ticket
     elif (command == ":!ticket"):
         sendmsg(chan, "http://support.koalabeast.com/#/appeal")
