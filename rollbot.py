@@ -26,7 +26,8 @@ class RollBot:
         pass
 
     def send_message(self, channel, message):
-        pass
+        message_template = "PRIVMSG {} : {}"
+        self.send_raw(message_template.format(channel, message))
 
     def send_ping(self, ping_message):
         self.send_raw("PONG :" + ping_message)
@@ -45,7 +46,7 @@ class RollBot:
         pass
 
     def send_raw(self, message):
-        return self.socket.send(message + "\n")
+        return self.socket.send((message + "\n").encode("utf-8"))
 
     def update_ping_time(self):
         self.last_ping = time.time()
@@ -64,12 +65,6 @@ prefix = '|'
 # Majestic owner
 owner = ['turtlemansam']
 owner_pass = ''
-
-# Connecting to IRC and shit
-def ping(content):
-    global last_ping
-    ircsock.send("PONG :" + content)
-    last_ping = time.time()
 
 
 def sendmsg(chan, msg):
