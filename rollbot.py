@@ -20,13 +20,13 @@ class RollBot:
     CONFIG_LOCATION = "./config.json"
 
     def __init__(self):
-        self.commands = {}
+        self.command_list = {}
         self.logger = Logger('RollBot', level=2)
         self.logger.info("RollBot started.")
 
         for name, method in inspect.getmembers(self.__class__, predicate=inspect.ismethod):
             if getattr(method, "is_command", False):
-                self.commands[name] = getattr(self, name)
+                self.command_list[name] = getattr(self, name)
                 self.logger.info("Added '{}' as a command.", name)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.last_ping = None
@@ -35,9 +35,6 @@ class RollBot:
             self.config = json.load(f)
         self.nick = self.config['botnick']
         self.command_prefix = self.config['prefix']
-
-    def on_connect(self):
-        pass
 
     def send_message(self, channel, message):
         message_template = "PRIVMSG {} :{}"
@@ -120,8 +117,8 @@ class RollBot:
         reply_to = destination
         if destination == self.nick:
             reply_to = source  # If it's a private message, reply to the source. Otherwise it's a channel message and reply there.
-        if command_key in self.commands:
-            self.commands[command_key](source, reply_to, *arguments)
+        if command_key in self.command_list:
+            self.command_list[command_key](source, reply_to, *arguments)
         else:
             combined_command = self.command_prefix + command_key
             self.send_message(reply_to, "Sorry, {} isn't a recognized command.".format(combined_command))
@@ -136,6 +133,10 @@ class RollBot:
     @command
     def about(self, source, reply_to, *args):
         self.send_message(reply_to, "Hi my name is {} and currently turtlemansam is holding me hostage. If anyone could 934-992-8144 and tell me a joke to help pass the time, that would be great.".format(self.nick))
+
+    @command
+    def commands(self, source, reply_to, *args):
+        self.send_message(reply_to, "Available commands: {}".format(", ".join(sorted(self.command_list.keys()))))
 
 bot = RollBot()
 bot.connect()
@@ -159,9 +160,6 @@ def commands(nick, chan, msg):
         argument = msg.split(" ")[4]
 
     # Command: About
-    if (command == ":" + prefix + "about"):
-        sendmsg(chan,
-                "Hi my name is rollbot and currently turtlemansam is holding me hostage. If anyone could 934-992-8144 and tell me a joke to help pass the time, that would be great.")
     # Command: commands
     elif (command == ":" + prefix + "commands"):
         sendmsg(chan, "About, flirt, fortune, insult, ISITALLCAPSHOUR, mods, netsplit, rate, streams, tagpro, weather")
