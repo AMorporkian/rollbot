@@ -30,7 +30,8 @@ class RollBot:
         self.send_raw(message_template.format(channel, message))
 
     def send_ping(self, ping_message):
-        self.send_raw("PONG :" + ping_message)
+        message_template = "PONG : {}"
+        self.send_raw(message_template.format(ping_message))
         self.update_ping_time()
 
     def join_channel(self, channel):
@@ -65,11 +66,6 @@ prefix = '|'
 # Majestic owner
 owner = ['turtlemansam']
 owner_pass = ''
-
-
-def sendmsg(chan, msg):
-    ircsock.send(("PRIVMSG " + chan + " :" + msg + "\n").encode("utf-8"))
-
 
 def joinchan(chan):
     ircsock.send("JOIN " + chan + "\n")
