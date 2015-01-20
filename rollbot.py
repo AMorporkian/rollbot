@@ -138,8 +138,9 @@ class RollBot:
     def commands(self, source, reply_to, *args):
         self.send_message(reply_to, "Available commands: {}".format(", ".join(sorted(self.command_list.keys()))))
 
-bot = RollBot()
-bot.connect()
+if __name__ == "__main__":
+    bot = RollBot()
+    bot.connect()
 
 """
 
