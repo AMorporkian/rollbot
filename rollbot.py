@@ -35,7 +35,8 @@ class RollBot:
         self.update_ping_time()
 
     def join_channel(self, channel):
-        pass
+        message_template = "JOIN {}"
+        self.send_raw(message_template.format(channel))
 
     def leave_channel(self, channel):
         pass
@@ -66,10 +67,6 @@ prefix = '|'
 # Majestic owner
 owner = ['turtlemansam']
 owner_pass = ''
-
-def joinchan(chan):
-    ircsock.send("JOIN " + chan + "\n")
-
 
 def leavechan(chan):
     ircsock.send("PART " + chan + "\n")
