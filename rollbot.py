@@ -39,7 +39,8 @@ class RollBot:
         self.send_raw(message_template.format(channel))
 
     def leave_channel(self, channel):
-        pass
+        message_template = "PART {}"
+        self.send_raw(message_template.format(channel))
 
     def connect(self):
         pass
