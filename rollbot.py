@@ -3,6 +3,7 @@
 # import os, sys
 
 # Import what's needed.
+import random
 
 import socket, string, os, time
 import json
@@ -120,8 +121,12 @@ class RollBot:
         if command_key in self.command_list:
             self.logger.info("Received command '{}' from {}", command_key, source)
             return_message = self.command_list[command_key](source, reply_to, *arguments)
-            if return_message:
-                self.send_message(reply_to, return_message)
+            if return_message is not None:
+                if isinstance(return_message, basestring):  # Is it a string?
+                    self.send_message(reply_to, return_message)  # If so, just send it along.
+                else:  # Otherwise it's a list or a tuple
+                    for message in return_message:  # So let's loop over them all
+                        self.send_message(reply_to, message)  # And send them.
         else:
             combined_command = self.command_prefix + command_key
             self.send_message(reply_to, "Sorry, {} isn't a recognized command.".format(combined_command))
@@ -146,6 +151,28 @@ class RollBot:
     @command
     def netsplit(self, source, reply_to, *args):
         return "technically we all netsplit http://pastebin.com/mPanErhR"
+
+    @command
+    def weather(self, source, reply_to, *args):
+        return "look out your goddamn window"
+
+    @command
+    def insult(self, source, reply_to, insultee=None, *args):
+        if insultee is None:
+            return "Who shall I insult?"
+        else:
+            with open("insults.txt") as f:
+                insult = random.choice(list(f))
+            messages = ("You're a pretty cool guy, {}".format(insultee),
+                        insult)
+            return messages
+
+    @command
+    def tagpro(self, source, reply_to, *args):
+        random_idea = "I wish tagpro was {}"
+        with open("iWishTagProWas.txt") as f:
+            return random_idea.format(random.choice(list(f)))
+
 
 if __name__ == "__main__":
     bot = RollBot()
@@ -230,12 +257,7 @@ def commands(nick, chan, msg):
                     "Mods: Flail, Hoog, Watball, Corhal, Ly, tim-sanchez, _Ron, Aaron215, JGibbs, Radian, cz, TinkerC, Bull_tagpro, pooppants, turtlemansam, McBride36, deeznutz, bizkut, poopv, Rems, Rambo, bbq, Akiki, TimeMod, rDuude, yo_cat, Virtulis")
 
 
-    # Command: netsplit
-    elif (command == ":" + prefix + "netsplit"):
-        sendmsg(chan, "technically we all netsplit http://pastebin.com/mPanErhR")
-    # Command: weather
-    elif (command == ":" + prefix + "weather"):
-        sendmsg(chan, "look out your goddamn window")
+
     # Trigger: ,
     #elif ircmsg.find(" ,") != -1:
     #	sendmsg(chan, "nice floating comma dickbrain")
@@ -248,13 +270,6 @@ def commands(nick, chan, msg):
     # Trigger: wat
     #elif (command == ":" + "wat"):
     #	sendmsg(chan, "no u")
-    # Command: Insult
-    elif (command == ":" + prefix + "insult"):
-        if argument == None:
-            sendmsg(chan, "Who shall I insult?")
-        else:
-            sendmsg(chan, "Your a pretty cool guy, " + argument + "!")
-            sendmsg(chan, (random.choice(list(open('insults.txt')))))
     # Command: TagPro
     elif (command == ":" + prefix + "tagpro"):
         sendmsg(chan, "I wish tagpro was " + (random.choice(list(open('iWishTagProWas.txt')))))
