@@ -118,7 +118,10 @@ class RollBot:
         if destination == self.nick:
             reply_to = source  # If it's a private message, reply to the source. Otherwise it's a channel message and reply there.
         if command_key in self.command_list:
-            self.command_list[command_key](source, reply_to, *arguments)
+            self.logger.info("Received command '{}' from {}", command_key, source)
+            return_message = self.command_list[command_key](source, reply_to, *arguments)
+            if return_message:
+                self.send_message(reply_to, return_message)
         else:
             combined_command = self.command_prefix + command_key
             self.send_message(reply_to, "Sorry, {} isn't a recognized command.".format(combined_command))
@@ -132,11 +135,17 @@ class RollBot:
     # Commands
     @command
     def about(self, source, reply_to, *args):
-        self.send_message(reply_to, "Hi my name is {} and currently turtlemansam is holding me hostage. If anyone could 934-992-8144 and tell me a joke to help pass the time, that would be great.".format(self.nick))
+        return "Hi my name is {} and currently turtlemansam is holding me hostage. " \
+               "If anyone could 934-992-8144 and tell me a joke to help pass the time, " \
+               "that would be great.".format(self.nick)
 
     @command
     def commands(self, source, reply_to, *args):
-        self.send_message(reply_to, "Available commands: {}".format(", ".join(sorted(self.command_list.keys()))))
+        return "Available commands: {}".format(", ".join(sorted(self.command_list.keys())))
+
+    @command
+    def netsplit(self, source, reply_to, *args):
+        return "technically we all netsplit http://pastebin.com/mPanErhR"
 
 if __name__ == "__main__":
     bot = RollBot()
@@ -162,8 +171,6 @@ def commands(nick, chan, msg):
 
     # Command: About
     # Command: commands
-    elif (command == ":" + prefix + "commands"):
-        sendmsg(chan, "About, flirt, fortune, insult, ISITALLCAPSHOUR, mods, netsplit, rate, streams, tagpro, weather")
     # Command: owner commands
     elif (command == ":" + prefix + "owner"):
         sendmsg(chan, "join, part, quit")
