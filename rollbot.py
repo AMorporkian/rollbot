@@ -6,6 +6,7 @@
 
 import socket, string, os, time
 import json
+import re
 import urllib2
 import random
 from datetime import datetime
@@ -17,10 +18,10 @@ class RollBot:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.last_ping = None
-
+        self.registered = False
         with open(self.CONFIG_LOCATION) as f:
             self.config = json.load(f)
-        self.run_loop()
+        self.nick = self.config['botnick']
 
     def on_connect(self):
         pass
@@ -46,12 +47,53 @@ class RollBot:
         server_information = (self.config['server'], self.config['port'])
         self.socket.connect(server_information)
         self.send_raw("PASS " + self.config['password'])
-        self.send_raw("USER {} {} {} :{}".format(botnick, botnick, botnick, "rollbot"))
-        self.send_raw("NICK " + botnick)
+        self.send_raw("USER {} {} {} :{}".format(self.nick, self.nick, self.nick, "rollbot"))
+        self.send_raw("NICK " + self.nick)
         self.run_loop()
 
+    def get_message_from_server(self):
+        message = ""
+        current_character = self.socket.recv(1)
+        while current_character != "\n":
+            message += current_character
+            current_character = self.socket.recv(1)
+        return message
+
     def run_loop(self):
-        pass
+        message_regex = r"^(?:[:](?P<prefix>\S+) )" \
+                        r"?(?P<type>\S+)" \
+                        r"(?: (?!:)(?P<destination>.+?))" \
+                        r"?(?: [:](?P<message>.+))?$"  # Extracts all appropriate groups from a raw IRC message
+        compiled_message = re.compile(message_regex)
+
+        while True:
+            try:
+                message = self.get_message_from_server()
+                print(message)
+                parsed_message = compiled_message.finditer(message)
+                message_dict = [m.groupdict() for m in parsed_message][0]  # Extract all the named groups into a dict
+                source_nick = ""
+                if "!" in message_dict['prefix']:  # Is the prefix from a nickname?
+                    source_nick = message_dict['prefix'].split("!")[0]  # If so, extract the nickname from the prefix.
+
+                if message_dict['type'] == "PING":
+                    self.send_ping(message_dict['message'])
+
+                if message_dict['type'] == "PRIVMSG":
+                    self.handle_message(source_nick, message_dict['destination'], message_dict['message'])
+
+                if message_dict['type'] == "001":  # Registration confirmation message
+                    self.registered = True
+
+            except socket.timeout:
+                print 'Disconnected'
+                self.socket.close()
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connect()
+
+    def handle_message(self, source, destination, message):
+        is_private = not destination.startswith("#")  # Check if it's sent to a channel. If not, it's a private message.
+        print(source, destination, message)
 
     def send_raw(self, message):
         return self.socket.send((message + "\n").encode("utf-8"))
@@ -59,6 +101,9 @@ class RollBot:
     def update_ping_time(self):
         self.last_ping = time.time()
 
+bot = RollBot()
+bot.connect()
+"""
 # IRC variables
 server = 'irc.freenode.net'
 port = 6667
@@ -363,3 +408,4 @@ while 1:
         ircsock.close()
         ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         connect()
+"""
