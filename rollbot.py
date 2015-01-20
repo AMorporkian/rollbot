@@ -89,6 +89,9 @@ class RollBot:
                 if message_dict['type'] == "001":  # Registration confirmation message
                     self.registered = True
                     self.logger.info("{} connected to server successfully.", self.nick)
+                    for channel in self.config['channel']:
+                        self.logger.info("Attempting to join {}", channel)
+                        self.join_channel(channel)
 
             except socket.timeout:
                 self.logger.error("Disconnected. Attempting to reconnect.")
