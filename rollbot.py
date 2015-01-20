@@ -7,6 +7,7 @@
 import socket, string, os, time
 import json
 import re
+from logbook import Logger
 import urllib2
 import random
 from datetime import datetime
@@ -19,9 +20,12 @@ class RollBot:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.last_ping = None
         self.registered = False
+        self.logger = Logger('RollBot')
+        self.logger.info("RollBot started.")
         with open(self.CONFIG_LOCATION) as f:
             self.config = json.load(f)
         self.nick = self.config['botnick']
+        self.command_prefix = self.config['prefix']
 
     def on_connect(self):
         pass
@@ -69,7 +73,7 @@ class RollBot:
         while True:
             try:
                 message = self.get_message_from_server()
-                print(message)
+                self.logger.debug("Received server message: {}", message)
                 parsed_message = compiled_message.finditer(message)
                 message_dict = [m.groupdict() for m in parsed_message][0]  # Extract all the named groups into a dict
                 source_nick = ""
@@ -84,16 +88,17 @@ class RollBot:
 
                 if message_dict['type'] == "001":  # Registration confirmation message
                     self.registered = True
+                    self.logger.info("{} connected to server successfully.", self.nick)
 
             except socket.timeout:
-                print 'Disconnected'
+                self.logger.error("Disconnected. Attempting to reconnect.")
                 self.socket.close()
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.connect()
 
     def handle_message(self, source, destination, message):
         is_private = not destination.startswith("#")  # Check if it's sent to a channel. If not, it's a private message.
-        print(source, destination, message)
+        is_command = message.startswith(self.config['prefix'])
 
     def send_raw(self, message):
         return self.socket.send((message + "\n").encode("utf-8"))
