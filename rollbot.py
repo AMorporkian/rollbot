@@ -3,6 +3,7 @@
 # import os, sys
 
 # Import what's needed.
+from datetime import datetime
 import random
 
 import socket, string, os, time
@@ -173,6 +174,31 @@ class RollBot:
         with open("iWishTagProWas.txt") as f:
             return random_idea.format(random.choice(list(f)))
 
+    @command
+    def flirt(self, source, reply_to, *args):
+        with open('flirt.txt') as f:
+            return random.choice(list(f))
+
+    @command
+    def fortune(self, source, reply_to, *args):
+        with open("fortune.txt") as f:
+            return "{}, {}".format(source, random.choice(list(f)))
+
+    @command
+    def isitallcapshour(self, source, reply_to, *args):
+        now = datetime.now()
+        if now.hour == 13:
+            return "YES IT IS, BITCHES"
+        else:
+            return "no, {}, it is not".format(source)
+
+    @command
+    def rate(self, source, reply_to, ratee, *args):
+        if ratee is None:
+            return "Who do you want me to rate?"
+        else:
+            return "{} has a rating of: {}".format(ratee, random.randint(1, 100))
+
 
 if __name__ == "__main__":
     bot = RollBot()
@@ -270,28 +296,7 @@ def commands(nick, chan, msg):
     # Trigger: wat
     #elif (command == ":" + "wat"):
     #	sendmsg(chan, "no u")
-    # Command: TagPro
-    elif (command == ":" + prefix + "tagpro"):
-        sendmsg(chan, "I wish tagpro was " + (random.choice(list(open('iWishTagProWas.txt')))))
-    # Command: Flirt
-    elif (command == ":" + prefix + "flirt"):
-        sendmsg(chan, (random.choice(list(open('flirt.txt')))))
-    # Command: fortune
-    elif (command == ":" + prefix + "fortune"):
-        sendmsg(chan, nick + ", " + (random.choice(list(open('fortune.txt')))))
-    # Command: ISITALLCAPSHOUR
-    elif (command == ":" + prefix + "ISITALLCAPSHOUR"):
-        now = datetime.now()
-        if now.hour == 13:
-            sendmsg(chan, "YES IT IS, BITCHES")
-        else:
-            sendmsg(chan, "no " + nick + ", it is not.")
-    # Command: rate
-    elif (command == ":" + prefix + "rate"):
-        if argument == None:
-            sendmsg(chan, "Who do you want me to rate?")
-        else:
-            sendmsg(chan, argument + " has a rating of: %s" % (random.randint(1, 100)))
+
     # Command: streams
     #elif (command == ":" + prefix + "streams"):
     #	checkStreams()
