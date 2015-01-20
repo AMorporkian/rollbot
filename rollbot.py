@@ -43,7 +43,12 @@ class RollBot:
         self.send_raw(message_template.format(channel))
 
     def connect(self):
-        pass
+        server_information = (self.config['server'], self.config['port'])
+        self.socket.connect(server_information)
+        self.send_raw("PASS " + self.config['password'])
+        self.send_raw("USER {} {} {} :{}".format(botnick, botnick, botnick, "rollbot"))
+        self.send_raw("NICK " + botnick)
+        self.run_loop()
 
     def run_loop(self):
         pass
@@ -53,9 +58,6 @@ class RollBot:
 
     def update_ping_time(self):
         self.last_ping = time.time()
-
-#define ircsock
-ircsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # IRC variables
 server = 'irc.freenode.net'
@@ -69,16 +71,8 @@ prefix = '|'
 owner = ['turtlemansam']
 owner_pass = ''
 
-def leavechan(chan):
-    ircsock.send("PART " + chan + "\n")
-
-
 def connect():
-    print "connecting...\n"
-    ircsock.connect((server, port))
-    ircsock.send("PASS " + password + "\n")
-    ircsock.send("USER " + botnick + " " + botnick + " " + botnick + " :rollbot\n")
-    ircsock.send("NICK " + botnick + "\n")
+
     registered = 0
     while not registered:
         ircmsg = ircsock.recv(2048)
